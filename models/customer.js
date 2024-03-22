@@ -56,6 +56,21 @@ class Customer {
     return new Customer(customer);
   }
 
+  /** get customers by search term */
+  static async search(searchTerm) {
+    const results = await db.query(
+      `SELECT id,
+              first_name AS "firstName",
+              last_name  AS "lastName",
+              phone,
+              notes
+       FROM customers
+       WHERE CONCAT(first_name, last_name) ILIKE $1`, [`%${searchTerm}%`]
+    );
+
+    return results.rows.map(r => new Customer(r));
+  }
+
   /** get all reservations for this customer. */
 
   async getReservations() {
