@@ -14,7 +14,6 @@ const router = new express.Router();
 
 router.get("/", async function (req, res, next) {
   const search = req.query.search || "";
-  console.log("Search term: ",search);
   const customers = await Customer.search(search);
   return res.render("customer_list.jinja", { customers });
 });
@@ -37,6 +36,14 @@ router.post("/add/", async function (req, res, next) {
 
   return res.redirect(`/${customer.id}/`);
 });
+
+/** Top ten: show list of top ten customers with most reservations. */
+router.get("/top-ten", async function (req, res, next) {
+  const customers = await Customer.getTopTen();
+  console.dir(customers);
+  return res.render("customer_top_ten.jinja", { customers });
+});
+
 
 /** Show a customer, given their ID. */
 

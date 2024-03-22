@@ -8,19 +8,20 @@ const Reservation = require("./reservation");
 /** Customer of the restaurant. */
 
 class Customer {
-  constructor({ id, firstName, lastName, phone, notes }) {
+  constructor({ id, firstName, lastName, phone, notes, reservationCount }) {
     this.id = id;
     this.firstName = firstName;
     this.lastName = lastName;
     this.phone = phone;
     this.notes = notes;
+    this.reservationCount = reservationCount;
   }
 
   /** find all customers. */
 
   static async all() {
     const results = await db.query(
-          `SELECT id,
+      `SELECT id,
                   first_name AS "firstName",
                   last_name  AS "lastName",
                   phone,
@@ -35,14 +36,14 @@ class Customer {
 
   static async get(id) {
     const results = await db.query(
-          `SELECT id,
+      `SELECT id,
                   first_name AS "firstName",
                   last_name  AS "lastName",
                   phone,
                   notes
            FROM customers
            WHERE id = $1`,
-        [id],
+      [id],
     );
 
     const customer = results.rows[0];
@@ -71,6 +72,25 @@ class Customer {
     return results.rows.map(r => new Customer(r));
   }
 
+  /** Returns top ten customers with most reservations */
+
+  static async getTopTen() {
+    const results = await db.query(`
+        SELECT id,
+               first_name AS "firstName",
+               last_name  AS "lastName",
+               phone,
+               notes
+               COUNT(*) AS "reservationCount"
+        FROM customers c JOIN reservations r ON c.id = r.customer_id
+        LIMIT 10
+        ORDER BY reservationCount DESC
+        GROUP BY c.id
+      `);
+
+    return results.rows.map(c => new Customer(c));
+  }
+
   /** get all reservations for this customer. */
 
   async getReservations() {
@@ -82,26 +102,26 @@ class Customer {
   async save() {
     if (this.id === undefined) {
       const result = await db.query(
-            `INSERT INTO customers (first_name, last_name, phone, notes)
+        `INSERT INTO customers (first_name, last_name, phone, notes)
              VALUES ($1, $2, $3, $4)
              RETURNING id`,
-          [this.firstName, this.lastName, this.phone, this.notes],
+        [this.firstName, this.lastName, this.phone, this.notes],
       );
       this.id = result.rows[0].id;
     } else {
       await db.query(
-            `UPDATE customers
+        `UPDATE customers
              SET first_name=$1,
                  last_name=$2,
                  phone=$3,
                  notes=$4
              WHERE id = $5`, [
-            this.firstName,
-            this.lastName,
-            this.phone,
-            this.notes,
-            this.id,
-          ],
+        this.firstName,
+        this.lastName,
+        this.phone,
+        this.notes,
+        this.id,
+      ],
       );
     }
   }
