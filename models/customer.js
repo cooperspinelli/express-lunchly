@@ -8,13 +8,12 @@ const Reservation = require("./reservation");
 /** Customer of the restaurant. */
 
 class Customer {
-  constructor({ id, firstName, lastName, phone, notes, reservationCount }) {
+  constructor({ id, firstName, lastName, phone, notes }) {
     this.id = id;
     this.firstName = firstName;
     this.lastName = lastName;
     this.phone = phone;
     this.notes = notes;
-    this.reservationCount = reservationCount;
   }
 
   /** find all customers. */
@@ -66,7 +65,7 @@ class Customer {
               phone,
               notes
        FROM customers
-       WHERE CONCAT(first_name, last_name) ILIKE $1`, [`%${searchTerm}%`]
+       WHERE CONCAT(first_name, ' ', last_name) ILIKE $1`, [`%${searchTerm}%`]
     );
 
     return results.rows.map(r => new Customer(r));
@@ -80,8 +79,7 @@ class Customer {
                first_name AS "firstName",
                last_name  AS "lastName",
                phone,
-               c.notes,
-               COUNT(*) AS "reservationCount"
+               c.notes
         FROM customers c JOIN reservations r ON c.id = r.customer_id
         GROUP BY c.id
         ORDER BY COUNT(*) DESC
@@ -126,8 +124,20 @@ class Customer {
     }
   }
 
+  async getReservationCount() {
+    const results = db.query(`
+        SELECT COUNT(c.id) AS "reservationCount"
+        FROM customers c JOIN reservations r ON c.id = r.customer_id
+        WHERE c.id = $1
+        GROUP BY c.id
+      `, [this.id]
+    );
+
+    return results.rows[0].reservationCount;
+  }
+
   /** Returns full name of customer */
-  getFullName() {
+  get fullName() {
     return `${this.firstName} ${this.lastName}`;
   }
 

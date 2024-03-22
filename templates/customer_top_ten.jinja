@@ -10,9 +10,9 @@
     {% for customer in customers %}
       <li>
         <a href="/{{ customer.id }}/">
-          {{ customer.getFullName() }}
+          {{ customer.fullName }}
         </a>
-        <span>Number of reservations: {{ customer.reservationCount }} </span>
+        <span>Number of reservations: {{ customer.getReservationCount() }} </span>
       </li>
     {% endfor %}
   </ol>
